@@ -1,0 +1,17 @@
+
+https://stackoverflow.com/questions/4955635/how-to-add-local-jar-files-to-a-maven-project
+
+/usr/lib/apache-netbeans/java/maven/bin/mvn
+
+mvn install:install-file \
+   -Dfile=<path-to-file> \
+   -DgroupId=<group-id> \
+   -DartifactId=<artifact-id> \
+   -Dversion=<version> \
+   -Dpackaging=<packaging> \
+   -DgeneratePom=true
+
+
+/usr/lib/apache-netbeans/java/maven/bin/mvn install:install-file -Dfile=/home/paulo/NetBeansProjects/AppletRunner/Execute/dist/Execute.jar -DgroupId=oracle.forms -DartifactId=demo -Dversion=1.0 -Dpackaging=jar -DgeneratePom=true
+
+C:\Program Files\NetBeans-19\netbeans\java\maven\bin\mvn install:install-file -Dfile=C:\Users\fa1470\Nextcloud\NetBeansProjects\AppletRunner\Execute\dist\Execute.jar -DgroupId=oracle.forms -DartifactId=demo -Dversion=1.0 -Dpackaging=jar -DgeneratePom=true

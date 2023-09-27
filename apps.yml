@@ -1,0 +1,16 @@
+links:
+   - l0: # o SClinico chama as aplicações web externas através de um link
+      regex: (.*pls/sam/SAM.acesso_novo.acesso_sam.*)
+      command: "#follow# $1"
+   - l1: # o SClinico ao terminar chama o seguinte URL para fazer logout
+      regex: .*-------pls/sam/SAM.cits.sair_sso
+      command: "#exit#"
+   - l2:
+      regex: (http://ffradbd4/.*)
+      command: "#browser_ie# $1"
+      
+commands:
+   - c1:
+      regex: c:\\BM\\showchrome.exe (.*)
+      command: '#browser_gc# $1'
+

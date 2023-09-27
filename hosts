@@ -1,0 +1,8 @@
+# ficheiro hosts no formato habitual
+# estes mapeamentos ficam em cache no JAVA e não haverá pedido de DNS para estas entradas
+
+192.168.1.1	servidor
+
+
+
+

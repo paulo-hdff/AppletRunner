@@ -1,0 +1,24 @@
+# este ficheiro é uma lista de impressoras no formato YAML
+# sendo uma lista, cada item começa com um hífen -
+# os atributos de um item da lista têm de ser indentados com 3 espaços
+# a seguir ao hífen vem o nome da impressora (nome que aparece ao utilizador)
+# cada impressora tem 3 atributos: host, port e type
+#    host: o ip da impressora
+#    port: o porto TCP da porta RAW da impressora (normalmente 9100)
+#    type: tipo de linguagem suportado pela impressora.
+#          tipos suportados são TEXT, PDF, POSTSCRIPT, PCL
+#          as Epson LX 300 serão do tipo TEXT
+
+# estas impressoras não existem no sistema operativo, mas serão reconhecidas no JAVA
+# quando for pedida a lista de impressoras pela aplicação
+
+- etiquetas:
+   host: 127.0.0.1
+   port: 9200
+   type: [TEXT]
+
+- declaracoes:
+   host: 127.0.0.2
+   port: 9100
+   type: [PDF, POSTSCRIPT, PCL]
+   
