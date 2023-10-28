@@ -14,6 +14,9 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -27,8 +30,8 @@ import org.yaml.snakeyaml.Yaml;
  */
 public class ExternalApplications {
     
-    protected static Map<String,String> commands = new HashMap<>();
-    protected static Map<String,String> links = new HashMap<>();
+    protected static Map<String,Map<String,String>> commands = new HashMap<>();
+    protected static Map<String,Map<String,String>> links = new HashMap<>();
     
     public static void loadExternalApplications() {
 
@@ -62,7 +65,7 @@ public class ExternalApplications {
                     System.out.println("   regex: "+regex);
                     System.out.println("   command: "+command);
                     
-                    links.put(regex, command);
+                    links.put(regex, prop);
                 }
                 
                 for(Map<String,Object> command : commandsConfig) {
@@ -76,7 +79,7 @@ public class ExternalApplications {
                     System.out.println("   regex: "+regex);
                     System.out.println("   command: "+cmd);
                     
-                    commands.put(regex, cmd);
+                    commands.put(regex, prop);
                 }
                 
             } catch (Exception e) {
@@ -99,12 +102,15 @@ public class ExternalApplications {
         return execute(link, links, force);
     }
     
-    protected static boolean execute(String cmd, Map<String,String> map, boolean force) {
+    protected static boolean execute(String cmd, Map<String,Map<String,String>> map, boolean force) {
         System.out.println("executing: \""+cmd+"\"");
         for(String regex : map.keySet()) {
-            //System.out.println("testing "+regex);
-            if( cmd.matches(regex)) {
-                cmd = cmd.replaceAll(regex, map.get(regex));
+            if( cmd.matches(regex) ) {
+                if( map.get(regex).get("noregex")!=null &&
+                        cmd.matches(map.get(regex).get("noregex")) ) {
+                    continue;
+                }
+                cmd = cmd.replaceAll(regex, map.get(regex).get("command"));
                 System.out.println("running "+cmd);
                 return run(cmd);
             }
@@ -141,6 +147,9 @@ public class ExternalApplications {
             case "#browser_ie#":
                 runIE(param);
                 return true;
+            case "#transform#":
+                transformUrl(param);
+                return true;
             case "#exit#":
                 runExit(param);
                 return true;
@@ -148,19 +157,128 @@ public class ExternalApplications {
                 //mostrar erro
                 String message = "Comando deconhecido: '"+parts[0]+"'";
                 System.out.println(message);
-                if(!GraphicsEnvironment.isHeadless()) {
-                    JOptionPane.showMessageDialog(null, message, "Ocorreu um erro", JOptionPane.ERROR_MESSAGE);
-                }
+//                if(!GraphicsEnvironment.isHeadless()) {
+//                    JOptionPane.showMessageDialog(null, message, "Ocorreu um erro", JOptionPane.ERROR_MESSAGE);
+//                }
         }
         
         return false;
     }
     
+    protected static Map<String,String> transformKeys = new HashMap<>();
+    protected static Pattern RANDOM = Pattern.compile(".*?(#rnd(:(?:static|global)-.*?)?(:\\d+)?(:.*?)?#).*?");
+    
+    protected static boolean transformUrl(String strUrl) {
+        StringBuilder newUrl = new StringBuilder();
+        try {
+//            System.out.println("vai testar: "+strUrl);
+            Matcher m = RANDOM.matcher(strUrl);
+            
+            int lastIndex = 0;
+            while( m.find() ) {
+//                System.out.println("\n\nfind: "+m.group(1));
+                
+                String key = null;
+//                System.out.println("groupCount: "+m.groupCount());
+                
+                if( m.group(2)!=null ) {
+                    String type = m.group(2);
+//                    System.out.println("type="+type);
+                    if( type.startsWith(":global-") ) {
+                        key = type;
+                    } else if( type.startsWith(":static-") ) {
+                        int paramsIndex = strUrl.indexOf("?");
+                        if( paramsIndex==-1 ) {
+                            paramsIndex = strUrl.length();
+                        }
+                        key = strUrl.substring(0, paramsIndex)+"-"+type;
+                    }
+                }
+                
+//                System.out.println("key = "+key);
+                
+                if( key!=null && transformKeys.containsKey(key) ) {
+                    String random = transformKeys.get(key);
+                    
+                    newUrl.append(strUrl, lastIndex, m.start(1)).append(random);
+                    lastIndex = m.end(1);
+                } else {
+                    
+                    int size = 10;
+                    if( m.group(3)!=null ) {
+                        try {
+                            size = Integer.parseInt(m.group(3).substring(1));
+                        } catch(Exception e) {}
+                    }
+
+                    String chars = "x";
+                    if( m.group(4)!=null ) {
+                        chars = m.group(4).substring(1);
+                    }
+
+                    String random = random(size, chars);
+                    
+                    if( key!=null ) {
+                        transformKeys.put(key, random);
+                    }
+                    
+                    newUrl.append(strUrl, lastIndex, m.start(1)).append(random);
+                    lastIndex = m.end(1);
+                }
+            }
+            
+            if (lastIndex < strUrl.length()) {
+                newUrl.append(strUrl, lastIndex, strUrl.length());
+            }
+            
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return executeLink(newUrl.toString(),true);
+    }
+    
+    //https://stackoverflow.com/a/1547940/662855
+    protected static String RAMDOM_CHARS_A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    protected static String RAMDOM_CHARS_a = "abcdefghijklmnopqrstuvwxyz";
+    protected static String RAMDOM_CHARS_n = "0123456789";
+    //                                        -._~:/?#[]@!$&'()*+,;=
+    protected static String RAMDOM_CHARS_s = "-._~:/?[]@!$'()*+,;=";
+    protected static String RAMDOM_CHARS_ALL = RAMDOM_CHARS_A+RAMDOM_CHARS_a+RAMDOM_CHARS_n+RAMDOM_CHARS_s;
+    
+    protected static String random(int size, String chars) {
+        StringBuilder sb = new StringBuilder();
+        Random r = new Random();
+        for(int i=0; i<size; i++) {
+            switch (chars.charAt(r.nextInt(chars.length()))) {
+                case 'a':
+                    //letras minusculas
+                    sb.append(RAMDOM_CHARS_a.charAt(r.nextInt(RAMDOM_CHARS_a.length())));
+                    break;
+                case 'A':
+                    //letras maiusculas
+                    sb.append(RAMDOM_CHARS_A.charAt(r.nextInt(RAMDOM_CHARS_A.length())));
+                    break;
+                case 's':
+                    //simbolos
+                    sb.append(RAMDOM_CHARS_s.charAt(r.nextInt(RAMDOM_CHARS_s.length())));
+                    break;
+                case 'n':
+                    //numeros
+                    sb.append(RAMDOM_CHARS_n.charAt(r.nextInt(RAMDOM_CHARS_n.length())));
+                    break;
+                default:
+                    //qualquer caracter
+                    sb.append(RAMDOM_CHARS_ALL.charAt(r.nextInt(RAMDOM_CHARS_ALL.length())));
+                    break;
+            }
+        }
+        return sb.toString();
+    }
     
     protected static boolean runFollow(String strUrl) {
         try {
             Document doc = Jsoup.connect(strUrl).get();
-            System.out.println(doc.html());
+            //System.out.println(doc.html());
 
             String action = null;
             String method = null;
@@ -186,11 +304,30 @@ public class ExternalApplications {
                 }
                 return executeLink(action+(params==null?"":params),true);
             } else if( doc.html().contains("SAM.dados_pce?sessionid") || (method!=null && method.toLowerCase().equals("post")) ) {
+                /*
                 String html = doc.html();
                 URL base = new URL(new URL(doc.baseUri()),".");
                 html = html.replace("src=\"SAM", "src=\""+base+"SAM");
                 html = html.replace("src=\"..", "src=\""+base+"..");
                 html = html.replace("href=\"..", "href=\""+base+"..");
+                */
+
+                //transformar os links em absolutos
+                Elements select = doc.select("a");
+                for (Element e : select){
+                    String absUrl = e.absUrl("href");
+                    e.attr("href", absUrl);
+                }
+                select = doc.select("img");
+                for (Element e : select){
+                    e.attr("src", e.absUrl("src"));
+                }
+                select = doc.select("frame");
+                for (Element e : select){
+                    e.attr("src", e.absUrl("src"));
+                }
+                
+                String html = doc.html();
                 
                 String request = "/"+strUrl.substring(strUrl.indexOf("?"));
                 HttpServer.getInstance().addRequest(request, html);

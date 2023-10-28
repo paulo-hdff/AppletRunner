@@ -11,7 +11,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -58,15 +57,15 @@ public class HttpServer extends Thread {
                     @Override
                     public void run() {
                         try {
-                            System.out.println("recebeu ligação: "+s.getRemoteSocketAddress());
+//                            System.out.println("recebeu ligação: "+s.getRemoteSocketAddress());
                             InputStream in = s.getInputStream();
                             BufferedReader br = new BufferedReader(new InputStreamReader(in));
                             String line;
                             String request = null;
                             while( (line=br.readLine())!=null ) {
-                                System.out.println(">> "+line);
+//                                System.out.println(">> "+line);
                                 if( request==null ) {
-                                    System.out.println("request = "+line);
+//                                    System.out.println("request = "+line);
                                     try {
                                         String[] parts = line.split(" ");
                                         request = parts[1];
@@ -78,7 +77,7 @@ public class HttpServer extends Thread {
                                     break;
                                 }
                             }
-                            //System.out.println("FIM dos headers");
+//                            System.out.println("FIM dos headers");
 
                             String html = pages.get(request);
 
@@ -86,21 +85,29 @@ public class HttpServer extends Thread {
                             OutputStreamWriter o = new OutputStreamWriter(out);
                             if( html == null ) {
                                 o.write("HTTP/1.1 404 Not found\r\n");
-                                //o.write("Content-Length: "+html.length()+"\r\n");
                                 o.write("Connection: close\r\n");
                                 o.write("Content-Type: text/html; charset=ISO-8859-15\r\n");
                                 o.write("\r\n");
+                                o.write("<html><body><h2>N&atilde;o encontrado</h2></body></html>\n");
+                                //https://stackoverflow.com/questions/11544048/how-do-i-suppress-friendly-error-messages-in-internet-explorer
+                                o.write("<!--\n");
+                                for(int i=0; i<512; i++) {
+                                    o.write("-");
+                                }
+                                o.write("\n-->");
                             } else {
                                 o.write("HTTP/1.1 200 OK\r\n");
-                                //o.write("Content-Length: "+html.length()+"\r\n");
                                 o.write("Connection: close\r\n");
                                 o.write("Content-Type: text/html; charset=ISO-8859-15\r\n");
                                 o.write("\r\n");
                                 o.write(html);
                             }
-                            o.close();
-                            s.close();
-                            System.out.println("Fim de request "+request);
+                            o.flush();
+                            
+                            try {
+                                s.close();
+                            } catch(Exception ex) {}
+//                            System.out.println("Fim de request "+request);
                         } catch(Exception e) {
                             e.printStackTrace();
                         }
@@ -108,16 +115,8 @@ public class HttpServer extends Thread {
                 }.start();
             } catch(Exception e) {
                 e.printStackTrace();
-                //break;
             }
         }
-        /*
-        try {
-            server.close();
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        */
     }
     
     public int getPort() {

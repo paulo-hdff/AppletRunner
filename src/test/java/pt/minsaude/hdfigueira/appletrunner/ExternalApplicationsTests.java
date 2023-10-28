@@ -4,6 +4,9 @@
  */
 package pt.minsaude.hdfigueira.appletrunner;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  *
  * @author paulo
@@ -13,8 +16,26 @@ public class ExternalApplicationsTests {
     
     public static void main(String[] args) throws Exception {
     
-        ExternalApplications.loadExternalApplications();
-        ExternalApplications.executeLink("http://192.168.1.58/pls/sam/SAM.acesso_novo.acesso_sam?sessionid=8082883732023090766435");
+        testTransformUrl();
+        
     }
-    
+
+
+    public static void testTransformUrl() {
+        ExternalApplications.loadExternalApplications();
+        
+        String strUrl = "http://127.0.0.1/bla?a=b&x=#rnd:static:26:an#&y=abc";
+//        ExternalApplications.transformUrl(strUrl);
+//        strUrl = "http://127.0.0.1/bla?a=b&x=#rnd:static:26:an#";
+//        ExternalApplications.transformUrl(strUrl);
+//        strUrl = "http://127.0.0.1/bla?a=b&x=#rnd:static-x:26:an#&y=abc&z=#rnd:global-x:26:an#&w=aa";
+//        ExternalApplications.transformUrl(strUrl);
+//        ExternalApplications.transformUrl(strUrl);
+//        strUrl = "http://127.0.0.1/ble?a=b&x=#rnd:static-x:26:an#&y=abc&z=#rnd:global-x:26:an#&w=aa";
+//        ExternalApplications.transformUrl(strUrl);
+//        strUrl = "http://127.0.0.1/ble?a=b&x=#rnd:5#";
+//        ExternalApplications.transformUrl(strUrl);
+        strUrl = "http://192.168.1.231/doctors/gfapp_call_popup.php?a=1";
+        ExternalApplications.executeLink(strUrl);
+    }
 }

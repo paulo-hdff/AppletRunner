@@ -10,6 +10,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Frame;
 import java.awt.Window;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.event.WindowStateListener;
@@ -106,143 +107,8 @@ public class AppletRunner {
                 
             }
         }
-        
-        
-        /*
-        String html = "";
-        String line;
-        BufferedReader br = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream()));
-        while( (line=br.readLine())!=null ) {
-            html += line;//+"\n";
-        }
-        //System.out.println(html);
-        
-        String htmlLower = html.toLowerCase();
-        int start = 0;
-        int end = 0;
-        while( start!=-1 ) {
-            String endString = "</";
-            int st = start;
-            start = htmlLower.indexOf("<applet ", st);
-            if( start!=-1 ) {
-                endString += "applet>";
-            } else {
-                start = htmlLower.indexOf("<object ", st);
-                endString += "object>";
-            }
-            if( start==-1 ) break;
-            end = htmlLower.indexOf(endString, start);
-            if( end >=0 ) {
-                end += 9;
-            } else {
-                //avançar para a proxima applet
-                start++;
-                continue;
-            }
-            String appletHtml = html.substring(start, end);
-            start = end;
-            //System.out.println(appletHtml);
-
-            Map<String,String> parameters = parseParameters(appletHtml);
-            System.out.println(parameters);
-            
-            String archive = getAttribute(html, "archive");
-            if( archive==null ) {
-                archive = parameters.get("archive");
-            }
-            System.out.println("archive = "+archive);
-            
-            String codebase = getAttribute(html, "codebase");
-            if( codebase==null || codebase.contains("/java.sun.com") ) {
-                codebase = parameters.get("CODEBASE");
-                System.out.println("codebase dos parametros = "+codebase);
-            }
-            System.out.println("codebase = "+codebase);
-            
-            String code = getAttribute(html, "code");
-            if( code==null ) {
-                code = parameters.get("code");
-            }
-            System.out.println("code = "+code);
-
-            ClassLoader cl = getClassLoader(url, codebase, archive);
-            */
-        
-        
-            /*
-            if( !parameters.containsKey("serverHost") ) {
-//                parameters.put("serverHost", url.getHost());
-//                parameters.put("serverPort", url.getPort()>0?(url.getPort()+""):(url.getDefaultPort()+""));
-            }
-            if( parameters.containsKey("serverURL") ) {
-                //                    /forms90/l90servlet?ifcfs=/forms90/f90servlet?config=sclinico_java&acceptLanguage=null
-                // http://ffsclinico01/forms90/l90servlet?ifcfs=/forms90/f90servlet?config=sclinico_java&acceptLanguage=null
-                // http://ffsclinico01/forms90/l90servlet?ifcfs=http://ffsclinico01/forms90/f90servlet?config=sclinico_java&acceptLanguage=null
-                String serverURL = parameters.get("serverURL");
-                //parameters.put("serverURL", "http://ffsclinico01/forms90/l90servlet?ifcfs=http://ffsclinico01/forms90/f90servlet?config=sclinico_java&acceptLanguage=null");
-                try {
-                    URL tmp = new URL(url, serverURL);
-                    if( tmp.getHost()==null || tmp.getHost().isEmpty() ) {
-                        //System.out.println("---------------");
-                    }
-                    System.out.println("serverURL = "+tmp.toString());
-                    //parameters.put("serverURL", tmp.toString());
-                    //parameters.put("serverURL", "http://ffsclinico01/forms90/l90servlet?ifcfs=http%3A%2F%2Fffsclinico01%2Fforms90%2Ff90servlet%3Fconfig%3Dsclinico_java%26acceptLanguage%3Dnull");
-                    //parameters.put("serverURL", "http://ffsclinico01/forms90/f90servlet?config=sclinico_java");
-                } catch(Exception ex) {
-                    Logger.getLogger(AppletRunner.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            
-            */
-            
-            /*
-            if( code!=null ) {
-                if( code.endsWith(".class") ) {
-                    code = code.substring(0, code.length()-6);
-                }
-                try {
-                    System.out.println("a criar o stub");
-                    Stub stub = new Stub(url, codebase, parameters);
-                    createApplet(cl, code, stub);
-                } catch(Exception e) {
-                    throw new IOException(e);
-                }
-            }
-        }
-        */
     }
 
-    private ClassLoader getClassLoader1(URL base, String codeBase, String archive) throws MalformedURLException {
-        if( !codeBase.endsWith("/") ) {
-            codeBase += "/";
-        }
-        base = new URL(base, codeBase);
-        List<URL> urls = new ArrayList<>();
-        
-        //URL url = new URL("file:///home/paulo/.m2/repository/oracle/forms/demo/1.0/demo-1.0.jar");
-        //System.out.println(url.toString());
-        //urls.add(url);
-        
-        //URLClassLoader urlcl = new URLClassLoader(urls.toArray(new URL[]{}));
-        
-        String[] archives = archive.split(",");
-        for(String jar : archives) {
-            jar = jar.trim();
-            URL u = new URL(base, jar);
-            System.out.println(u.toString());
-            urls.add(u);
-        }
-        //java.util.Collections.reverse(urls);
-        
-        
-        //URLClassLoader urlcl1 = new URLClassLoader(urls.toArray(new URL[]{}), urlcl);
-        URLClassLoader urlcl1 = new URLClassLoader(urls.toArray(new URL[]{}));
-        
-        
-        return urlcl1;
-    }
-    
     private ClassLoader getClassLoader(URL base, String codeBase, String archive) throws MalformedURLException {
         if( !codeBase.endsWith("/") ) {
             codeBase += "/";
@@ -398,7 +264,14 @@ public class AppletRunner {
                 final JFrame frame = new JFrame("AppletRunner - "+className);
                 
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.addWindowListener(new WindowAdapter(){
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        Runtime.getRuntime().halt(0);
+                    }
+                });
                 
+                //TODO: passar para um ficheiro de configuração
                 for(URL url :  ((URLClassLoader)cl).getURLs()) {
                     if( url.toString().toLowerCase().contains("gifs_sam") ) {
                         try {

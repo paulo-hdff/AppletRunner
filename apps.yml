@@ -1,16 +1,61 @@
+# este ficheiro é uma lista de impressoras no formato YAML
+# sendo uma lista, cada item começa com um hífen -
+# os atributos de um item da lista têm de ser indentados com 3 espaços
+#
+# na lista de links podemos mapear links que a aplicação tenta abrir num browser para comandos internos da aplicação.
+# se não for especificado um comando que indique um browser especifico, os links são abertor no default browser.
+# são suportados os seguintes comandos:
+#
+#    #follow#     => faz o download do URL passado como parâmetro e toma decisões com base no conteúdo da página.
+#                    usado para seguir os links que o sclinico gera para as aplicações externas.
+#                    só é necessário se for preciso abrir um desses links num browser em particular.
+#
+#    #browser_gc# => abre o URL passado como parâmetro no google chrome.
+#
+#    #browser_ie# => abre o URL passado como parâmetro no internet explorer.
+#
+#    #exit#       => termina o programa
+#
+#    #transform#  => aplica uma transformação com base no parâmetro:
+#                          #rnd:<static|global>-<nome>:<tamanho>:<conjunto-caracteres>#
+#
+#                    util para gerar cookies no URL. ver exemplo abaixo
+#
+#                    rnd   (obrigatório) => gera uma string random
+#                    static   (opcional) => guarda a string gerada associada ao URL (parâmetro da transformação) sem a parte da query
+#                    global   (opcional) => guarda a string gerada associada ao nome
+#                    sem nome            => não guarda (gera um «a string diferente cada vez que for chamado)
+#                    tamanho  (opcional) => número de caracteres da string a ser gerada (default = 10)
+#                    conjunto-caracteres (opcional) => se não for especificado usa todos os conjuntos de caracteres
+#                                           A: letras maiúsculas
+#                                           a: letras minúsculas
+#                                           n: números de 0 a 9
+#                                           s: simbolos
+#                                           outra letra: qualquer um dos acima
+
 links:
-   - l0: # o SClinico chama as aplicações web externas através de um link
-      regex: (.*pls/sam/SAM.acesso_novo.acesso_sam.*)
+   # o nome do link não é importante para a configuração
+   - l1:
+      # expressão regular a procurar
+      # pode incluir grupos para posterior substituição no comando a executar
+      # um grupo é algo entre parentesis 
+      regex: (.*pls/sam/SAM.acesso_novo.acesso_sam.*)   # para seguir os links do sclinico
+      # comando a executar
+      # pode-se substituir $1, $2, etc pelo grupo capturado na regex
       command: "#follow# $1"
-   - l1: # o SClinico ao terminar chama o seguinte URL para fazer logout
-      regex: .*-------pls/sam/SAM.cits.sair_sso
-      command: "#exit#"
    - l2:
-      regex: (http://ffradbd4/.*)
+      regex: (http://so_abre_no_ie/.*)
       command: "#browser_ie# $1"
+   - l3:
+      regex: (http://192.168.0.1/chamada.php.*)
+      # só executa o comando se fizer match na regex e NÃO fizer match na noregex (evitar loops)
+      noregex: .*cookie=.*
+      # gera um cookie name random, com 26 caracteres do tipo letras minúsculas e números e fica associado ao URL     
+      command: "#transform# $1&cookie=#rnd:static-cookie:26:an#"
       
+# é semelhante à lista de links mas aplica-se aos comandos executados pelo sclinico
 commands:
    - c1:
       regex: c:\\BM\\showchrome.exe (.*)
-      command: '#browser_gc# $1'
+      command: '#browser_gc# $1'          # $1 corresponde ao parâmetro passado para o showchrome.exe
 

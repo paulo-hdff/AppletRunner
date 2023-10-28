@@ -73,7 +73,7 @@ public class Context implements AppletContext {
 
     @Override
     public void showDocument(URL url) {
-        System.out.println("url: "+url);
+        //System.out.println("url: "+url);
         
         if( ExternalApplications.executeLink(url.toString().replace(" ", "+")) ) {
             return;

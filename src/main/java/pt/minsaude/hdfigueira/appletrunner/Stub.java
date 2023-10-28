@@ -37,7 +37,7 @@ public class Stub implements AppletStub {
 
     @Override
     public URL getDocumentBase() {
-        System.out.println("documentBaseUrl = "+documentBase);
+        //System.out.println("documentBaseUrl = "+documentBase);
         return documentBase;
     }
 
