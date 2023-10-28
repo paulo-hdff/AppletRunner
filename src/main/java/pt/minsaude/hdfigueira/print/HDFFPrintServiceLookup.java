@@ -17,6 +17,7 @@ import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.AttributeSet;
 import org.yaml.snakeyaml.Yaml;
+import pt.minsaude.hdfigueira.appletrunner.Utils;
 
 /**
  *
@@ -41,9 +42,17 @@ public class HDFFPrintServiceLookup extends PrintServiceLookup {
 
     protected void loadPrinters() {
 
+        PrintService[] localPrintServices = PrintServiceLookup.lookupPrintServices(null, null);
+        for (PrintService printService : localPrintServices) {
+            String name = printService.getName().trim();
+            
+            HDFFBypassPrintService pr = new HDFFBypassPrintService("Bypass - "+name, printService);
+            printServices.add(pr);
+        }        
+        
         File printersFile = new File("printers.yml");
         if (!printersFile.exists()) {
-            File path = getPath();
+            File path = Utils.getPath();
             if (path != null) {
                 printersFile = new File(path, "printers.yml");
             }
@@ -132,39 +141,4 @@ public class HDFFPrintServiceLookup extends PrintServiceLookup {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
-    protected static File getPath_() {
-        try {
-            File path = new File(HDFFPrintServiceLookup.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            if (path.isDirectory()) {
-                return path;
-            }
-            return path.getParentFile();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    protected static File getPath() {
-        try {
-            File path = null;
-            URL url = HDFFPrintServiceLookup.class.getProtectionDomain().getCodeSource().getLocation();
-            
-            if( url.toString().startsWith("file://") ) {
-                String uncPath = url.toString();
-                uncPath = "\\\\"+uncPath.replace("file://", "").replace("/", "\\");
-                path = new File(uncPath);
-            } else {
-                path = new File(url.toURI());
-            }
-            
-            if (path.isDirectory()) {
-                return path;
-            }
-            return path.getParentFile();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }    
 }
