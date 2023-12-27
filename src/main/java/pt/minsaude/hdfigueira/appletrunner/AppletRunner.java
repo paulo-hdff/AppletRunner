@@ -59,13 +59,14 @@ public class AppletRunner {
         
         
         Document doc = Jsoup.connect(url.toString()).get();
-        Elements applets = doc.select("object");
+        Elements applets = doc.select("object, applet");
         for(Element applet : applets) {
-            if( "object".equals(applet.nodeName()) ) {
+            if( "object".equals(applet.nodeName())  || "applet".equals(applet.nodeName()) ) {
                 
                 Map<String,String> parameters = parseElementParameters(applet);
                 System.out.println(parameters);
                 
+                //TODO: passar isto para um ficheiro de configuração
                 if( url.toString().contains("config=sonho") ) {
                     parameters.put("separateFrame","false");
                 }
@@ -90,7 +91,7 @@ public class AppletRunner {
                 }
                 System.out.println("code = "+code);
 
-                ClassLoader cl = getClassLoader(url, codebase, archive);
+                URLClassLoader cl = getClassLoader(url, codebase, archive);
                 
                 if( code!=null ) {
                     if( code.endsWith(".class") ) {
@@ -98,7 +99,7 @@ public class AppletRunner {
                     }
                     try {
                         System.out.println("a criar o stub");
-                        Stub stub = new Stub(url, codebase, parameters);
+                        Stub stub = new Stub(url, codebase, parameters, cl);
                         createApplet(cl, code, stub);
                     } catch(Exception e) {
                         throw new IOException(e);
@@ -109,7 +110,7 @@ public class AppletRunner {
         }
     }
 
-    private ClassLoader getClassLoader(URL base, String codeBase, String archive) throws MalformedURLException {
+    private URLClassLoader getClassLoader(URL base, String codeBase, String archive) throws MalformedURLException {
         if( !codeBase.endsWith("/") ) {
             codeBase += "/";
         }
@@ -119,6 +120,7 @@ public class AppletRunner {
         System.out.println("PATH = "+Utils.getPath());
         
         URL url = null;
+        //TODO: procurar todos os ficheiros numa pasta (evitar ter aqui um nome hardcoded)
         File libFile = new File("demo-1.0.jar");
         if (!libFile.exists()) {
             File path = Utils.getPath();
@@ -139,6 +141,7 @@ public class AppletRunner {
         for(String jar : archives) {
             jar = jar.trim();
             URL u = new URL(base, jar);
+            //TODO: passar isto para ficheiro de configuração
             if( OSValidator.isUnix() ) {
                 u = downloadFile(u);
             }
@@ -252,7 +255,7 @@ public class AppletRunner {
             Method method = cls.getDeclaredMethod("addListener", new Class[] {StartAppInterface.class});
             method.invoke(obj, sai);
         } catch(Throwable e) {
-            e.printStackTrace(System.out);
+            //e.printStackTrace(System.out);
         }        
         
         Class c = cl.loadClass(className);

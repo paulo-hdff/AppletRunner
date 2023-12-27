@@ -26,10 +26,13 @@ import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.event.PrintJobAttributeListener;
 import javax.print.event.PrintJobListener;
 import javax.swing.JOptionPane;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.io.RandomAccessReadBuffer;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.printing.PDFPageable;
+
+import org.apache.pdfbox3.Loader;
+import org.apache.pdfbox3.io.RandomAccessReadBuffer;
+import org.apache.pdfbox3.pdmodel.PDDocument;
+import org.apache.pdfbox3.printing.PDFPageable;
+
+//import org.apache.pdfbox3.pdmodel.PDDocument;
 
 /**
  *
@@ -122,12 +125,21 @@ public class HDFFBypassDocPrintJob implements DocPrintJob {
             //ZPL to PDF: https://stackoverflow.com/a/20386205
             //            https://labelary.com/service.html
             if (result.size() > 0) {
+                
                 RandomAccessReadBuffer buffer = new RandomAccessReadBuffer(new ByteArrayInputStream(result.toByteArray()));
                 PDDocument document = Loader.loadPDF(buffer);
                 PrinterJob job = PrinterJob.getPrinterJob();
                 job.setPageable(new PDFPageable(document));
                 job.setPrintService(printService.getBypassPrintService());
                 job.print();
+                
+                /*
+                //https://stackoverflow.com/questions/18636622/pdfbox-how-to-print-pdf-with-specified-printer
+                PDDocument pdf = PDDocument.load(new ByteArrayInputStream(result.toByteArray()));
+                PrinterJob job = PrinterJob.getPrinterJob();
+                job.setPrintService(printService.getBypassPrintService());
+                pdf.print(job);
+                */
             }
 
         } catch (Exception e) {
@@ -136,9 +148,6 @@ public class HDFFBypassDocPrintJob implements DocPrintJob {
                 String message = e.getLocalizedMessage();
                 if( message==null ) {
                     message = "Erro desconhecido";
-                }
-                if( message.contains("Connection refused") ) {
-                    message += "\nVerifique se a impressora está ligada";
                 }
                 JOptionPane.showMessageDialog(null, message, "Ocorreu um erro a imprimir", JOptionPane.ERROR_MESSAGE);
             }

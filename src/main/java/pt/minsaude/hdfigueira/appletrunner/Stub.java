@@ -7,6 +7,7 @@ package pt.minsaude.hdfigueira.appletrunner;
 import java.applet.AppletContext;
 import java.applet.AppletStub;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -21,6 +22,7 @@ public class Stub implements AppletStub {
     private URL documentBase = null;
     private String codeBase;
     private Map<String,String> parameters = new HashMap<>();
+    private URLClassLoader classLoader = null;
     
     public Stub() {}
     
@@ -30,6 +32,15 @@ public class Stub implements AppletStub {
         this.parameters = parameters;
     }
     
+    public Stub(URL documentBase, String codeBase, Map<String,String> parameters, URLClassLoader cl) {
+        this(documentBase, codeBase, parameters);
+        this.classLoader = cl;
+    }
+    
+    public URLClassLoader getURLClassLoader() {
+        return classLoader;
+    }
+    
     @Override
     public boolean isActive() {
         return true;
@@ -37,7 +48,7 @@ public class Stub implements AppletStub {
 
     @Override
     public URL getDocumentBase() {
-        //System.out.println("documentBaseUrl = "+documentBase);
+//        System.out.println("documentBaseUrl = "+documentBase);
         return documentBase;
     }
 
@@ -61,7 +72,7 @@ public class Stub implements AppletStub {
 
     @Override
     public AppletContext getAppletContext() {
-        return new Context();
+        return new Context(this);
     }
 
     @Override
